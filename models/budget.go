@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// Definindo o modelo de orçamento
 type Budget struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
 	UserID      *uint     `json:"user_id"` // Pode ser NULL para usuários não autenticados
