@@ -176,7 +176,7 @@ func GetAllBudgets(c *gin.Context) {
 func LinkBudgetsToUser(c *gin.Context) {
 	var req struct {
 		SessionID string `json:"session_id"`
-		UserID    uint   `json:"user_id"`
+		UserID    string `json:"user_id"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
