@@ -224,7 +224,7 @@ func UpdateBudgetStatus(c *gin.Context) {
 		return
 	}
 
-	statusList := []string{"aguardando orcamento", "em andamento", "concluido", "cancelado"}
+	statusList := []string{"aguardando orçamento", "em andamento", "concluido", "cancelado"}
 
 	valid := false
 	for _, s := range statusList {

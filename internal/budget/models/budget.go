@@ -23,7 +23,7 @@ type Budget struct {
 	Notes            string     `json:"notes" gorm:"type:text"`     // Observações
 	InstallerName    string     `json:"installer_name" gorm:"size:100"`
 	Value            float64    `json:"value"`
-	Status           string     `json:"status" gorm:"default:aguardando orcamento"`
+	Status           string     `json:"status" gorm:"default:aguardando orçamento"`
 	ExecutionDate    *time.Time `json:"execution_date"`    // nova
 	FinishDate       *time.Time `json:"finish_date"`       // nova
 	PaymentStatus    string     `json:"payment_status"`    // "pendente" ou "pago"
