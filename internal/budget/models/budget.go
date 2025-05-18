@@ -6,7 +6,7 @@ type Budget struct {
 	ID               uint       `json:"id" gorm:"primaryKey;autoIncrement"`
 	UserID           *uint      `json:"user_id" gorm:"index"`
 	SessionID        string     `json:"session_id" gorm:"size:100;not null"`
-	InstallerID      uint       `json:"installer_id" gorm:"not null"`
+	InstallerID      string     `json:"installer_id" gorm:"not null"`
 	Name             string     `json:"name" gorm:"size:100"` // Nome do solicitante
 	Email            string     `json:"email" gorm:"size:100"`
 	Phone            string     `json:"phone" gorm:"size:20"`
