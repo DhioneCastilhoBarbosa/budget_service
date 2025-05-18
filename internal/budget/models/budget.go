@@ -4,7 +4,7 @@ import "time"
 
 type Budget struct {
 	ID               uint       `json:"id" gorm:"primaryKey;autoIncrement"`
-	UserID           *uint      `json:"user_id" gorm:"index"`
+	UserID           string     `json:"user_id" gorm:"index"`
 	SessionID        string     `json:"session_id" gorm:"size:100;not null"`
 	InstallerID      string     `json:"installer_id" gorm:"not null"`
 	Name             string     `json:"name" gorm:"size:100"` // Nome do solicitante
