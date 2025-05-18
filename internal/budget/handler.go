@@ -48,9 +48,12 @@ func CreateBudget(c *gin.Context) {
 	if val, err := strconv.ParseFloat(getFirst(form.Value["value"]), 64); err == nil {
 		budget.Value = val
 	}
-	if val, err := strconv.ParseUint(getFirst(form.Value["installer_id"]), 10, 32); err == nil {
-		budget.InstallerID = uint(val)
+	installerID := getFirst(form.Value["installer_id"])
+	if installerID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "installer_id é obrigatório"})
+		return
 	}
+	budget.InstallerID = installerID
 
 	// Upload de fotos com nome seguro
 	photoMap := []struct {
