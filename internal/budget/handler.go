@@ -208,7 +208,7 @@ func LinkBudgetsToUser(c *gin.Context) {
 		return
 	}
 
-	// 1. Verifica se já existem orçamentos vinculados com esse session_id
+	// Busca todos os orçamentos com o session_id
 	var existingBudgets []models.Budget
 	database.DB.Where("session_id = ?", req.SessionID).Find(&existingBudgets)
 
@@ -217,33 +217,25 @@ func LinkBudgetsToUser(c *gin.Context) {
 		return
 	}
 
-	// 2. Verifica se todos os orçamentos já estão vinculados ao mesmo usuário
-	allLinkedToSameUser := true
+	// Verifica se algum orçamento está vinculado a outro usuário
 	for _, budget := range existingBudgets {
 		if budget.UserID != nil && *budget.UserID != req.UserID {
-			// Encontrou um orçamento já vinculado a outro usuário
 			c.JSON(http.StatusConflict, gin.H{"message": "Orçamentos já vinculados a outro usuário"})
 			return
 		}
-
-		if budget.UserID != nil && *budget.UserID == "" {
-			allLinkedToSameUser = false
-		}
 	}
 
-	// 3. Se todos já estavam corretamente vinculados, retorna sucesso
-	if allLinkedToSameUser {
+	// Se há pelo menos um orçamento sem user_id, vinculamos
+	updated := database.DB.Model(&models.Budget{}).
+		Where("session_id = ? AND user_id IS NULL", req.SessionID).
+		Update("user_id", req.UserID)
+
+	if updated.RowsAffected == 0 {
 		c.JSON(http.StatusOK, gin.H{"message": "Orçamentos já estavam vinculados a este usuário"})
 		return
 	}
 
-	// 4. Atualiza todos os orçamentos com user_id NULL
-	database.DB.Model(&models.Budget{}).
-		Where("session_id = ? AND (user_id IS NULL OR user_id = '')", req.SessionID).
-		Update("user_id", req.UserID)
-
 	c.JSON(http.StatusOK, gin.H{"message": "Orçamentos vinculados ao usuário com sucesso"})
-
 }
 
 func UpdateBudgetValue(c *gin.Context) {
