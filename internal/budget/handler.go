@@ -29,26 +29,37 @@ func CreateBudget(c *gin.Context) {
 	// Campos de texto
 	budget.SessionID = getFirst(form.Value["session_id"])
 	budget.Name = getFirst(form.Value["name"])
+
 	email := getFirst(form.Value["email"])
 	budget.Email = &email
+
 	phone := getFirst(form.Value["phone"])
 	budget.Phone = &phone
+
 	locationType := getFirst(form.Value["location_type"])
 	budget.LocationType = &locationType
+
 	distance := getFirst(form.Value["distance"])
 	budget.Distance = &distance
+
 	networkType := getFirst(form.Value["network_type"])
 	budget.NetworkType = &networkType
+
 	structureType := getFirst(form.Value["structure_type"])
 	budget.StructureType = &structureType
+
 	chargerType := getFirst(form.Value["charge_type"])
 	budget.ChargerType = &chargerType
+
 	power := getFirst(form.Value["power"])
 	budget.Power = &power
+
 	protection := getFirst(form.Value["protection"])
 	budget.Protection = &protection
+
 	notes := getFirst(form.Value["notes"])
 	budget.Notes = &notes
+
 	installerName := getFirst(form.Value["installer_name"])
 	budget.InstallerName = &installerName
 
@@ -56,9 +67,11 @@ func CreateBudget(c *gin.Context) {
 	if val, err := strconv.ParseUint(getFirst(form.Value["station_count"]), 10, 32); err == nil {
 		budget.StationCount = uint(val)
 	}
+
 	if val, err := strconv.ParseFloat(getFirst(form.Value["value"]), 64); err == nil {
 		budget.Value = val
 	}
+
 	installerID := getFirst(form.Value["installer_id"])
 	if installerID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "installer_id é obrigatório"})
@@ -66,17 +79,11 @@ func CreateBudget(c *gin.Context) {
 	}
 	budget.InstallerID = installerID
 
-	// Upload de fotos com nome seguro
-	photoMap := []struct {
-		field string
-		dest  *string
-	}{
-		{"photo1", budget.Photo1},
-		{"photo2", budget.Photo2},
-	}
+	// Upload de fotos
+	photoFields := []string{"photo1", "photo2"}
 
-	for _, item := range photoMap {
-		files := form.File[item.field]
+	for _, field := range photoFields {
+		files := form.File[field]
 		if len(files) == 0 {
 			continue
 		}
@@ -88,7 +95,7 @@ func CreateBudget(c *gin.Context) {
 			return
 		}
 
-		// Detecta tipo de arquivo
+		// Detecta tipo do arquivo
 		contentType := fileHeader.Header.Get("Content-Type")
 		var ext string
 		switch contentType {
@@ -102,19 +109,25 @@ func CreateBudget(c *gin.Context) {
 			ext = ".jpg" // fallback
 		}
 
-		// Gera nome seguro
-		safeName := fmt.Sprintf("foto_%s_%d%s", item.field, time.Now().UnixNano(), ext)
+		// Nome seguro
+		safeName := fmt.Sprintf("foto_%s_%d%s", field, time.Now().UnixNano(), ext)
 
 		// Upload
 		url, uploadErr := s3helper.UploadReaderToS3(file, safeName)
 		file.Close()
 
 		if uploadErr != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Erro ao enviar %s: %v", item.field, uploadErr)})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Erro ao enviar %s: %v", field, uploadErr)})
 			return
 		}
 
-		*item.dest = url
+		// Atribui no campo correto
+		switch field {
+		case "photo1":
+			budget.Photo1 = &url
+		case "photo2":
+			budget.Photo2 = &url
+		}
 	}
 
 	// Salva no banco
