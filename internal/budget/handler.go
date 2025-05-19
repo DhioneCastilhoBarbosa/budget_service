@@ -29,17 +29,28 @@ func CreateBudget(c *gin.Context) {
 	// Campos de texto
 	budget.SessionID = getFirst(form.Value["session_id"])
 	budget.Name = getFirst(form.Value["name"])
-	budget.Email = getFirst(form.Value["email"])
-	budget.Phone = getFirst(form.Value["phone"])
-	budget.LocationType = getFirst(form.Value["location_type"])
-	budget.Distance = getFirst(form.Value["distance"])
-	budget.NetworkType = getFirst(form.Value["network_type"])
-	budget.StructureType = getFirst(form.Value["structure_type"])
-	budget.ChargerType = getFirst(form.Value["charge_type"])
-	budget.Power = getFirst(form.Value["power"])
-	budget.Protection = getFirst(form.Value["protection"])
-	budget.Notes = getFirst(form.Value["notes"])
-	budget.InstallerName = getFirst(form.Value["installer_name"])
+	email := getFirst(form.Value["email"])
+	budget.Email = &email
+	phone := getFirst(form.Value["phone"])
+	budget.Phone = &phone
+	locationType := getFirst(form.Value["location_type"])
+	budget.LocationType = &locationType
+	distance := getFirst(form.Value["distance"])
+	budget.Distance = &distance
+	networkType := getFirst(form.Value["network_type"])
+	budget.NetworkType = &networkType
+	structureType := getFirst(form.Value["structure_type"])
+	budget.StructureType = &structureType
+	chargerType := getFirst(form.Value["charge_type"])
+	budget.ChargerType = &chargerType
+	power := getFirst(form.Value["power"])
+	budget.Power = &power
+	protection := getFirst(form.Value["protection"])
+	budget.Protection = &protection
+	notes := getFirst(form.Value["notes"])
+	budget.Notes = &notes
+	installerName := getFirst(form.Value["installer_name"])
+	budget.InstallerName = &installerName
 
 	// Campos numéricos
 	if val, err := strconv.ParseUint(getFirst(form.Value["station_count"]), 10, 32); err == nil {
@@ -60,8 +71,8 @@ func CreateBudget(c *gin.Context) {
 		field string
 		dest  *string
 	}{
-		{"photo1", &budget.Photo1},
-		{"photo2", &budget.Photo2},
+		{"photo1", budget.Photo1},
+		{"photo2", budget.Photo2},
 	}
 
 	for _, item := range photoMap {
@@ -196,13 +207,13 @@ func LinkBudgetsToUser(c *gin.Context) {
 	// 2. Verifica se todos os orçamentos já estão vinculados ao mesmo usuário
 	allLinkedToSameUser := true
 	for _, budget := range existingBudgets {
-		if budget.UserID != "" && budget.UserID != req.UserID {
+		if budget.UserID != nil && *budget.UserID != req.UserID {
 			// Encontrou um orçamento já vinculado a outro usuário
 			c.JSON(http.StatusConflict, gin.H{"message": "Orçamentos já vinculados a outro usuário"})
 			return
 		}
 
-		if budget.UserID == "" {
+		if budget.UserID != nil && *budget.UserID == "" {
 			allLinkedToSameUser = false
 		}
 	}
@@ -215,7 +226,7 @@ func LinkBudgetsToUser(c *gin.Context) {
 
 	// 4. Atualiza todos os orçamentos com user_id NULL
 	database.DB.Model(&models.Budget{}).
-		Where("session_id = ? AND user_id IS NULL", req.SessionID).
+		Where("session_id = ? AND (user_id IS NULL OR user_id = '')", req.SessionID).
 		Update("user_id", req.UserID)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Orçamentos vinculados ao usuário com sucesso"})
