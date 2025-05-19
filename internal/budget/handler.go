@@ -184,17 +184,30 @@ func LinkBudgetsToUser(c *gin.Context) {
 		return
 	}
 
-	// Atualiza apenas orçamentos que ainda não estão vinculados a um usuário
+	// Verifica se já existem orçamentos vinculados a esse usuário com esse session_id
+	var count int64
+	database.DB.Model(&models.Budget{}).
+		Where("session_id = ? AND user_id = ?", req.SessionID, req.UserID).
+		Count(&count)
+
+	if count > 0 {
+		// Já estão vinculados corretamente
+		c.JSON(http.StatusOK, gin.H{"message": "Orçamentos já estavam vinculados a este usuário"})
+		return
+	}
+
+	// Tenta vincular orçamentos ainda não vinculados
 	result := database.DB.Model(&models.Budget{}).
 		Where("session_id = ? AND user_id IS NULL", req.SessionID).
 		Update("user_id", req.UserID)
 
 	if result.RowsAffected == 0 {
-		c.JSON(http.StatusConflict, gin.H{"message": "Orçamentos já vinculados a um usuário"})
+		// Já está vinculado a outro usuário
+		c.JSON(http.StatusConflict, gin.H{"message": "Orçamentos já vinculados a outro usuário"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Orçamentos vinculados ao usuário"})
+	c.JSON(http.StatusOK, gin.H{"message": "Orçamentos vinculados ao usuário com sucesso"})
 }
 
 func UpdateBudgetValue(c *gin.Context) {
