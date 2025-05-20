@@ -13,6 +13,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type PagamentoWebhook struct {
+	UserID string `json:"user_id"`
+	Status string `json:"status"`
+}
+
 // Criar um orçamento (chamado pelo Chat Service)
 func CreateBudget(c *gin.Context) {
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 100<<20)
@@ -399,4 +404,54 @@ func ConfirmExecution(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Confirmações atualizadas com sucesso"})
+}
+
+func ReceberWebhookPagamento(c *gin.Context) {
+	var payload PagamentoWebhook
+
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		log.Println("❌ JSON inválido:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido"})
+		return
+	}
+
+	if payload.UserID == "" || payload.Status == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id e status são obrigatórios"})
+		return
+	}
+
+	statusList := []string{
+		"aguardando orçamento",
+		"em andamento",
+		"concluido",
+		"cancelado",
+		"aguardando pagamento",
+		"pago",
+		"expirado",
+	}
+
+	valid := false
+	for _, s := range statusList {
+		if s == payload.Status {
+			valid = true
+			break
+		}
+	}
+
+	if !valid {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status inválido"})
+		return
+	}
+
+	// Atualiza todos os budgets do usuário
+	if err := database.DB.Model(&models.Budget{}).
+		Where("user_id = ?", payload.UserID).
+		Update("status", payload.Status).Error; err != nil {
+		log.Println("❌ Erro ao atualizar budgets:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar status"})
+		return
+	}
+
+	log.Printf("✅ Webhook de pagamento: status \"%s\" atualizado para user_id=%s", payload.Status, payload.UserID)
+	c.JSON(http.StatusOK, gin.H{"message": "Status atualizado com sucesso"})
 }

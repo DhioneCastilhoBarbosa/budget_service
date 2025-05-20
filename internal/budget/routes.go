@@ -21,6 +21,9 @@ func SetupRoutes(router *gin.Engine) {
 		// Vincula orçamentos a um usuário após login
 		v1.PUT("/link", LinkBudgetsToUser)
 
+		// webhook para receber notificações de pagamento
+		v1.POST("/pagamento/webhook", ReceberWebhookPagamento)
+
 		protected := v1.Group("/", middlewares.AuthMiddleware())
 		{
 			protected.PUT("/:id/value", UpdateBudgetValue)
