@@ -14,8 +14,9 @@ import (
 )
 
 type PagamentoWebhook struct {
-	UserID string `json:"user_id"`
-	Status string `json:"status"`
+	UserID   string `json:"user_id"`
+	Status   string `json:"status"`
+	BudgetID string `json:"budget_id"`
 }
 
 // Criar um orçamento (chamado pelo Chat Service)
@@ -415,8 +416,8 @@ func ReceberWebhookPagamento(c *gin.Context) {
 		return
 	}
 
-	if payload.UserID == "" || payload.Status == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id e status são obrigatórios"})
+	if payload.UserID == "" || payload.Status == "" || payload.BudgetID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id, budget_id e status são obrigatórios"})
 		return
 	}
 
@@ -443,15 +444,23 @@ func ReceberWebhookPagamento(c *gin.Context) {
 		return
 	}
 
-	// Atualiza todos os budgets do usuário
-	if err := database.DB.Model(&models.Budget{}).
-		Where("user_id = ?", payload.UserID).
-		Update("status", payload.Status).Error; err != nil {
-		log.Println("❌ Erro ao atualizar budgets:", err)
+	// Atualiza o budget correspondente ao user_id e id
+	result := database.DB.Model(&models.Budget{}).
+		Where("id = ? AND user_id = ?", payload.BudgetID, payload.UserID).
+		Update("status", payload.Status)
+
+	if result.Error != nil {
+		log.Println("❌ Erro ao atualizar status do orçamento:", result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar status"})
 		return
 	}
 
-	log.Printf("✅ Webhook de pagamento: status \"%s\" atualizado para user_id=%s", payload.Status, payload.UserID)
+	if result.RowsAffected == 0 {
+		log.Printf("⚠️ Nenhum orçamento encontrado com id=%s e user_id=%s", payload.BudgetID, payload.UserID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Orçamento não encontrado"})
+		return
+	}
+
+	log.Printf("✅ Status do orçamento %s atualizado para \"%s\" (user_id=%s)", payload.BudgetID, payload.Status, payload.UserID)
 	c.JSON(http.StatusOK, gin.H{"message": "Status atualizado com sucesso"})
 }
