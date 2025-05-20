@@ -320,15 +320,21 @@ func UpdateBudgetStatus(c *gin.Context) {
 // Atualiza o data de execução e finalização do orçamento
 func UpdateBudgetDates(c *gin.Context) {
 	id := c.Param("id")
+
 	var body struct {
 		ExecutionDate string `json:"execution_date"`
 		FinishDate    string `json:"finish_date"`
 	}
 
-	layout := "2006-01-02" // Esperado: "yyyy-mm-dd"
+	// ⬇️ Bind do JSON aqui
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido"})
+		return
+	}
+
+	layout := "2006-01-02"
 	update := map[string]interface{}{}
 
-	// Valida e converte execution_date
 	if body.ExecutionDate != "" {
 		t, err := time.Parse(layout, body.ExecutionDate)
 		if err != nil {
@@ -338,7 +344,6 @@ func UpdateBudgetDates(c *gin.Context) {
 		update["execution_date"] = t
 	}
 
-	// Valida e converte finish_date
 	if body.FinishDate != "" {
 		t, err := time.Parse(layout, body.FinishDate)
 		if err != nil {
