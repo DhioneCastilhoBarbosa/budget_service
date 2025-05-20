@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type PagamentoWebhook struct {
@@ -173,35 +174,37 @@ func getFirst(values []string) string {
 
 // Buscar orçamentos do usuário autenticado
 func GetUserBudgets(c *gin.Context) {
-	// Tenta pegar o user_id via URL param ou query string
-	userID := c.Param("user_id")
-	if userID == "" {
-		userID = c.Query("user_id")
-	}
+	// Tenta pegar user_id ou installer_id via query string ou param
+	userID := c.Query("user_id")
+	installerID := c.Query("installer_id")
 
-	// Valida se o ID foi fornecido
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetro 'user_id' é obrigatório"})
+	// Verifica se pelo menos um parâmetro foi fornecido
+	if userID == "" && installerID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetro 'user_id' ou 'installer_id' é obrigatório"})
 		return
 	}
 
 	var budgets []models.Budget
+	var result *gorm.DB
 
-	// Realiza a busca no banco
-	result := database.DB.Where("user_id = ?", userID).Find(&budgets)
+	// Faz a busca de acordo com o parâmetro fornecido
+	if userID != "" {
+		result = database.DB.Where("user_id = ?", userID).Find(&budgets)
+	} else {
+		result = database.DB.Where("installer_id = ?", installerID).Find(&budgets)
+	}
+
 	if result.Error != nil {
-		log.Printf("Erro ao buscar orçamentos do usuário %s: %v", userID, result.Error)
+		log.Printf("Erro ao buscar orçamentos: %v", result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar orçamentos"})
 		return
 	}
 
-	// Verifica se há resultados
 	if len(budgets) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Nenhum orçamento encontrado"})
 		return
 	}
 
-	// Retorna os orçamentos encontrados
 	c.JSON(http.StatusOK, budgets)
 }
 
