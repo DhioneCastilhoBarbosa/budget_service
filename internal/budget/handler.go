@@ -15,7 +15,6 @@ import (
 
 // Criar um orçamento (chamado pelo Chat Service)
 func CreateBudget(c *gin.Context) {
-	// Aumenta o limite do corpo da requisição
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 100<<20)
 
 	form, err := c.MultipartForm()
@@ -48,7 +47,7 @@ func CreateBudget(c *gin.Context) {
 	structureType := getFirst(form.Value["structure_type"])
 	budget.StructureType = &structureType
 
-	chargerType := getFirst(form.Value["charge_type"])
+	chargerType := getFirst(form.Value["charger_type"]) // corrigido: era "charge_type"
 	budget.ChargerType = &chargerType
 
 	power := getFirst(form.Value["power"])
@@ -62,6 +61,28 @@ func CreateBudget(c *gin.Context) {
 
 	installerName := getFirst(form.Value["installer_name"])
 	budget.InstallerName = &installerName
+
+	// ➕ Campos de endereço
+	cep := getFirst(form.Value["cep"])
+	budget.CEP = &cep
+
+	street := getFirst(form.Value["street"])
+	budget.Street = &street
+
+	number := getFirst(form.Value["number"])
+	budget.Number = &number
+
+	neighborhood := getFirst(form.Value["neighborhood"])
+	budget.Neighborhood = &neighborhood
+
+	city := getFirst(form.Value["city"])
+	budget.City = &city
+
+	state := getFirst(form.Value["state"])
+	budget.State = &state
+
+	complement := getFirst(form.Value["complement"])
+	budget.Complement = &complement
 
 	// Campos numéricos
 	if val, err := strconv.ParseUint(getFirst(form.Value["station_count"]), 10, 32); err == nil {
@@ -81,7 +102,6 @@ func CreateBudget(c *gin.Context) {
 
 	// Upload de fotos
 	photoFields := []string{"photo1", "photo2"}
-
 	for _, field := range photoFields {
 		files := form.File[field]
 		if len(files) == 0 {
@@ -95,7 +115,6 @@ func CreateBudget(c *gin.Context) {
 			return
 		}
 
-		// Detecta tipo do arquivo
 		contentType := fileHeader.Header.Get("Content-Type")
 		var ext string
 		switch contentType {
@@ -106,13 +125,10 @@ func CreateBudget(c *gin.Context) {
 		case "image/webp":
 			ext = ".webp"
 		default:
-			ext = ".jpg" // fallback
+			ext = ".jpg"
 		}
 
-		// Nome seguro
 		safeName := fmt.Sprintf("foto_%s_%d%s", field, time.Now().UnixNano(), ext)
-
-		// Upload
 		url, uploadErr := s3helper.UploadReaderToS3(file, safeName)
 		file.Close()
 
@@ -121,7 +137,6 @@ func CreateBudget(c *gin.Context) {
 			return
 		}
 
-		// Atribui no campo correto
 		switch field {
 		case "photo1":
 			budget.Photo1 = &url

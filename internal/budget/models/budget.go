@@ -10,6 +10,13 @@ type Budget struct {
 	Name             string     `json:"name" gorm:"size:100"`
 	Email            *string    `json:"email" gorm:"size:100"`
 	Phone            *string    `json:"phone" gorm:"size:20"`
+	CEP              *string    `json:"cep" gorm:"size:20"`
+	Street           *string    `json:"street" gorm:"size:100"`
+	Number           *string    `json:"number" gorm:"size:20"`
+	Neighborhood     *string    `json:"neighborhood" gorm:"size:100"`
+	City             *string    `json:"city" gorm:"size:100"`
+	State            *string    `json:"state" gorm:"size:2"`
+	Complement       *string    `json:"complement" gorm:"size:100"`
 	StationCount     uint       `json:"station_count"`
 	LocationType     *string    `json:"location_type" gorm:"size:100"`
 	Photo1           *string    `json:"photo1" gorm:"size:255"`
