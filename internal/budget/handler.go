@@ -428,7 +428,6 @@ func ReceberWebhookPagamento(c *gin.Context) {
 		"cancelado",
 		"aguardando pagamento",
 		"pago",
-		"expirado",
 	}
 
 	valid := false
@@ -445,9 +444,14 @@ func ReceberWebhookPagamento(c *gin.Context) {
 	}
 
 	// Atualiza o budget correspondente ao user_id e id
+	update := map[string]interface{}{
+		"payment_status": payload.Status,
+		"status":         "em andamento",
+	}
+
 	result := database.DB.Model(&models.Budget{}).
 		Where("id = ? AND user_id = ?", payload.BudgetID, payload.UserID).
-		Update("status", payload.Status)
+		Updates(update)
 
 	if result.Error != nil {
 		log.Println("❌ Erro ao atualizar status do orçamento:", result.Error)
