@@ -389,9 +389,16 @@ func UpdatePaymentStatus(c *gin.Context) {
 // Atualiza as confirmações do orçamento
 func ConfirmExecution(c *gin.Context) {
 	id := c.Param("id")
+
 	var body struct {
 		InstallerConfirm *bool `json:"installer_confirm"`
 		ClientConfirm    *bool `json:"client_confirm"`
+	}
+
+	// Aqui está o ponto que faltava
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Corpo da requisição inválido"})
+		return
 	}
 
 	update := map[string]interface{}{}
