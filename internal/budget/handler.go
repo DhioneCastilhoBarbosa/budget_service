@@ -336,7 +336,7 @@ func UpdateBudgetDates(c *gin.Context) {
 	update := map[string]interface{}{}
 
 	if body.ExecutionDate != "" {
-		t, err := time.Parse(layout, body.ExecutionDate)
+		t, err := time.ParseInLocation(layout, body.ExecutionDate, time.Local)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Formato da execution_date inválido. Use yyyy-mm-dd"})
 			return
@@ -345,7 +345,7 @@ func UpdateBudgetDates(c *gin.Context) {
 	}
 
 	if body.FinishDate != "" {
-		t, err := time.Parse(layout, body.FinishDate)
+		t, err := time.ParseInLocation(layout, body.FinishDate, time.Local)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Formato da finish_date inválido. Use yyyy-mm-dd"})
 			return
