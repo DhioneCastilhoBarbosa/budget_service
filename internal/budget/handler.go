@@ -326,7 +326,7 @@ func UpdateBudgetDates(c *gin.Context) {
 		FinishDate    *time.Time `json:"finish_date"`
 	}
 
-	// Bind do JSON (vai converter ISO 8601 automaticamente)
+	// Bind do JSON (converte ISO 8601 para time.Time)
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido"})
 		return
@@ -335,11 +335,13 @@ func UpdateBudgetDates(c *gin.Context) {
 	update := map[string]interface{}{}
 
 	if body.ExecutionDate != nil {
-		update["execution_date"] = *body.ExecutionDate
+		localTime := body.ExecutionDate.In(time.Local) // Ajusta para fuso local
+		update["execution_date"] = localTime
 	}
 
 	if body.FinishDate != nil {
-		update["finish_date"] = *body.FinishDate
+		localTime := body.FinishDate.In(time.Local)
+		update["finish_date"] = localTime
 	}
 
 	if len(update) == 0 {
