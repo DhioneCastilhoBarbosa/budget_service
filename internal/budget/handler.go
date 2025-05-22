@@ -322,35 +322,24 @@ func UpdateBudgetDates(c *gin.Context) {
 	id := c.Param("id")
 
 	var body struct {
-		ExecutionDate string `json:"execution_date"`
-		FinishDate    string `json:"finish_date"`
+		ExecutionDate *time.Time `json:"execution_date"`
+		FinishDate    *time.Time `json:"finish_date"`
 	}
 
-	// ⬇️ Bind do JSON aqui
+	// Bind do JSON (vai converter ISO 8601 automaticamente)
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido"})
 		return
 	}
 
-	layout := "2006-01-02"
 	update := map[string]interface{}{}
 
-	if body.ExecutionDate != "" {
-		t, err := time.ParseInLocation(layout, body.ExecutionDate, time.Local)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Formato da execution_date inválido. Use yyyy-mm-dd"})
-			return
-		}
-		update["execution_date"] = t
+	if body.ExecutionDate != nil {
+		update["execution_date"] = *body.ExecutionDate
 	}
 
-	if body.FinishDate != "" {
-		t, err := time.ParseInLocation(layout, body.FinishDate, time.Local)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Formato da finish_date inválido. Use yyyy-mm-dd"})
-			return
-		}
-		update["finish_date"] = t
+	if body.FinishDate != nil {
+		update["finish_date"] = *body.FinishDate
 	}
 
 	if len(update) == 0 {
